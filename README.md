@@ -1,5 +1,5 @@
 <!-- ## CRM/Project Management App (Flask) -->
-## AR Studios Website/Projecct Management App (Flask)
+## AR Studios Website/Project Management App (Flask)
 
 Modern Flask-based CRM and lightweight project management app with authentication, role-based access, admin CMS, project tracking, file uploads, and a real-time project chat powered by Socket.IO.
 
