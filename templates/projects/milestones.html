@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.name }} - Milestones{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{{ url_for('project.projects') }}">Projects</a></li>
+                            <li class="breadcrumb-item"><a
+                                    href="{{ url_for('project.project_detail', project_id=project.id) }}">{{
+                                    project.name }}</a></li>
+                            <li class="breadcrumb-item active">Milestones</li>
+                        </ol>
+                    </nav>
+                    <h1 class="h3 mb-0">Project Milestones</h1>
+                    <p class="text-muted mb-0">Track and manage project milestones</p>
+                </div>
+                <a href="{{ url_for('project.project_detail', project_id=project.id) }}"
+                    class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Project
+                </a>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
+                role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Milestones List -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Project Milestones</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if milestones %}
+                            <div class="list-group list-group-flush">
+                                {% for milestone in milestones %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">{{ milestone.title }}</h6>
+                                            <p class="mb-1 text-muted">{{ milestone.description }}</p>
+                                            <small class="text-muted">
+                                                Due: {{ milestone.due_date.strftime('%B %d, %Y') if milestone.due_date
+                                                else 'No due date' }}
+                                                {% if milestone.completed_at %}
+                                                | Completed: {{ milestone.completed_at.strftime('%B %d, %Y') }}
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span
+                                                class="badge bg-{{ 'success' if milestone.status == 'completed' else 'warning' if milestone.status == 'in_progress' else 'secondary' }}">
+                                                {{ milestone.status.replace('_', ' ').title() }}
+                                            </span>
+                                            {% if current_user.is_designer() or current_user.is_admin() %}
+                                            <select class="form-select form-select-sm milestone-status"
+                                                data-milestone-id="{{ milestone.id }}" style="width: auto;">
+                                                <option value="pending" {{ 'selected' if milestone.status=='pending' }}>
+                                                    Pending</option>
+                                                <option value="in_progress" {{ 'selected' if
+                                                    milestone.status=='in_progress' }}>In Progress</option>
+                                                <option value="completed" {{ 'selected' if milestone.status=='completed'
+                                                    }}>Completed</option>
+                                            </select>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-flag fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No milestones created yet</h5>
+                                <p class="text-muted">Create your first milestone to start tracking project progress.
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <!-- Add New Milestone -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Add New Milestone</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST">
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">Milestone Title *</label>
+                                    <input type="text" class="form-control" id="title" name="title" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Description</label>
+                                    <textarea class="form-control" id="description" name="description"
+                                        rows="3"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="due_date" class="form-label">Due Date</label>
+                                    <input type="date" class="form-control" id="due_date" name="due_date">
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-plus"></i> Add Milestone
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Milestone Statistics -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Milestone Statistics</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="mb-2">
+                                        <span class="badge bg-secondary fs-6">{{ milestones|selectattr('status',
+                                            'equalto', 'pending')|list|length }}</span>
+                                    </div>
+                                    <small class="text-muted">Pending</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="mb-2">
+                                        <span class="badge bg-warning fs-6">{{ milestones|selectattr('status',
+                                            'equalto', 'in_progress')|list|length }}</span>
+                                    </div>
+                                    <small class="text-muted">In Progress</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="mb-2">
+                                        <span class="badge bg-success fs-6">{{ milestones|selectattr('status',
+                                            'equalto', 'completed')|list|length }}</span>
+                                    </div>
+                                    <small class="text-muted">Completed</small>
+                                </div>
+                            </div>
+                            {% if milestones %}
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="text-muted">Progress</small>
+                                    <small class="text-muted">
+                                        {{ ((milestones|selectattr('status', 'equalto', 'completed')|list|length /
+                                        milestones|length) * 100)|round(1) }}%
+                                    </small>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-success"
+                                        style="width: {{ (milestones|selectattr('status', 'equalto', 'completed')|list|length / milestones|length) * 100 }}%">
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Update milestone status
+    document.addEventListener('DOMContentLoaded', function () {
+        const milestoneSelects = document.querySelectorAll('.milestone-status');
+
+        milestoneSelects.forEach(select => {
+            select.addEventListener('change', function () {
+                const milestoneId = this.dataset.milestoneId;
+                const status = this.value;
+
+                fetch(`/milestones/${milestoneId}/update-status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: status })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update the badge
+                            const badge = this.previousElementSibling;
+                            badge.textContent = status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            badge.className = `badge bg-${status === 'completed' ? 'success' : status === 'in_progress' ? 'warning' : 'secondary'}`;
+
+                            // Show success message
+                            const alert = document.createElement('div');
+                            alert.className = 'alert alert-success alert-dismissible fade show';
+                            alert.innerHTML = `
+                        Milestone status updated successfully
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                            document.querySelector('.container-fluid').insertBefore(alert, document.querySelector('.row'));
+
+                            // Auto-dismiss after 3 seconds
+                            setTimeout(() => {
+                                alert.remove();
+                            }, 3000);
+                        } else {
+                            alert('Error updating milestone status: ' + data.error);
+                            // Reset the select to its previous value
+                            this.value = this.dataset.previousValue || this.value;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error updating milestone status');
+                        // Reset the select to its previous value
+                        this.value = this.dataset.previousValue || this.value;
+                    });
+            });
+
+            // Store the initial value
+            select.dataset.previousValue = select.value;
+        });
+    });
+</script>
+{% endblock %}

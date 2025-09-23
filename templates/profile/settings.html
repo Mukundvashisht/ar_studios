@@ -1,0 +1,470 @@
+{% extends "base.html" %}
+
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Appearance Settings -->
+            <div class="content-card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-palette"></i>
+                        Appearance
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Theme</label>
+                            <div class="theme-options">
+                                <div class="theme-option" data-theme="light">
+                                    <div class="theme-preview light-preview">
+                                        <div class="theme-header"></div>
+                                        <div class="theme-sidebar"></div>
+                                        <div class="theme-content"></div>
+                                    </div>
+                                    <span>Light</span>
+                                </div>
+                                <div class="theme-option" data-theme="dark">
+                                    <div class="theme-preview dark-preview">
+                                        <div class="theme-header"></div>
+                                        <div class="theme-sidebar"></div>
+                                        <div class="theme-content"></div>
+                                    </div>
+                                    <span>Dark</span>
+                                </div>
+                                <div class="theme-option" data-theme="auto">
+                                    <div class="theme-preview auto-preview">
+                                        <div class="theme-header"></div>
+                                        <div class="theme-sidebar"></div>
+                                        <div class="theme-content"></div>
+                                    </div>
+                                    <span>Auto</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Settings -->
+            <div class="content-card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-bell"></i>
+                        Notifications
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('profile.update_notifications') }}">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="emailNotifications"
+                                        name="email_notifications" {{ 'checked' if current_user.email_notifications
+                                        else '' }}>
+                                    <label class="form-check-label" for="emailNotifications">
+                                        Email Notifications
+                                    </label>
+                                    <small class="form-text text-muted d-block">
+                                        Receive email updates about project activities
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="projectUpdates"
+                                        name="project_updates" {{ 'checked' if current_user.project_updates else '' }}>
+                                    <label class="form-check-label" for="projectUpdates">
+                                        Project Updates
+                                    </label>
+                                    <small class="form-text text-muted d-block">
+                                        Get notified when projects you're assigned to are updated
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="taskAssignments"
+                                        name="task_assignments" {{ 'checked' if current_user.task_assignments else ''
+                                        }}>
+                                    <label class="form-check-label" for="taskAssignments">
+                                        Task Assignments
+                                    </label>
+                                    <small class="form-text text-muted d-block">
+                                        Receive notifications when you're assigned to new tasks
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    Save Notification Settings
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Privacy Settings -->
+            <div class="content-card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-shield-alt"></i>
+                        Privacy & Security
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Change Password</strong>
+                                    <small class="form-text text-muted d-block">
+                                        Update your account password
+                                    </small>
+                                </div>
+                                <a href="{{ url_for('profile.change_password') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-key"></i>
+                                    Change Password
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Two-Factor Authentication</strong>
+                                    <small class="form-text text-muted d-block">
+                                        Add an extra layer of security to your account
+                                    </small>
+                                </div>
+                                <button class="btn btn-outline-success" disabled>
+                                    <i class="fas fa-mobile-alt"></i>
+                                    Enable 2FA
+                                    <small>(Coming Soon)</small>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Active Sessions</strong>
+                                    <small class="form-text text-muted d-block">
+                                        Manage your active login sessions
+                                    </small>
+                                </div>
+                                <button class="btn btn-outline-warning" disabled>
+                                    <i class="fas fa-desktop"></i>
+                                    View Sessions
+                                    <small>(Coming Soon)</small>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Information -->
+        <div class="col-lg-4">
+            <div class="content-card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-user-circle"></i>
+                        Account Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="account-info">
+                        <div class="info-item">
+                            <label>Username</label>
+                            <span>{{ current_user.username }}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Email</label>
+                            <span>{{ current_user.email }}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Member Since</label>
+                            <span>{{ current_user.created_at.strftime('%B %d, %Y') if current_user.created_at else
+                                'Recently' }}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Last Login</label>
+                            <span>{{ current_user.last_login.strftime('%B %d, %Y at %I:%M %p') if
+                                current_user.last_login else 'Unknown' }}</span>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="account-actions">
+                        <a href="{{ url_for('profile.edit_profile') }}" class="btn btn-outline-primary w-100 mb-2">
+                            <i class="fas fa-edit"></i>
+                            Edit Profile
+                        </a>
+                        <a href="{{ url_for('profile.export_data') }}" class="btn btn-outline-info w-100 mb-2">
+                            <i class="fas fa-download"></i>
+                            Export Data
+                        </a>
+                        <button class="btn btn-outline-danger w-100" data-bs-toggle="modal"
+                            data-bs-target="#deleteAccountModal">
+                            <i class="fas fa-trash"></i>
+                            Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header border-danger">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Delete Account
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <strong>Warning:</strong> This action cannot be undone. This will permanently delete your account
+                    and all associated data.
+                </div>
+                <p>Please type <strong>DELETE</strong> to confirm:</p>
+                <input type="text" class="form-control" id="deleteConfirmation" placeholder="Type DELETE to confirm">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete" disabled>
+                    <i class="fas fa-trash"></i>
+                    Delete Account
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Theme switching
+        const themeOptions = document.querySelectorAll('.theme-option');
+        const currentTheme = localStorage.getItem('theme') || 'light';
+
+        // Set active theme
+        themeOptions.forEach(option => {
+            if (option.dataset.theme === currentTheme) {
+                option.classList.add('active');
+            }
+
+            option.addEventListener('click', function () {
+                const selectedTheme = this.dataset.theme;
+
+                // Remove active class from all options
+                themeOptions.forEach(opt => opt.classList.remove('active'));
+
+                // Add active class to selected option
+                this.classList.add('active');
+
+                // Apply theme
+                applyTheme(selectedTheme);
+
+                // Save preference
+                localStorage.setItem('theme', selectedTheme);
+            });
+        });
+
+        function applyTheme(theme) {
+            const body = document.body;
+
+            if (theme === 'dark') {
+                body.classList.add('dark-mode');
+            } else if (theme === 'light') {
+                body.classList.remove('dark-mode');
+            } else if (theme === 'auto') {
+                const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                body.classList.toggle('dark-mode', isDarkMode);
+            }
+        }
+
+        // Apply saved theme
+        applyTheme(currentTheme);
+
+        // Delete account confirmation
+        const deleteConfirmation = document.getElementById('deleteConfirmation');
+        const confirmDeleteBtn = document.getElementById('confirmDelete');
+
+        deleteConfirmation.addEventListener('input', function () {
+            const isValid = this.value === 'DELETE';
+            confirmDeleteBtn.disabled = !isValid;
+        });
+
+        confirmDeleteBtn.addEventListener('click', function () {
+            if (deleteConfirmation.value === 'DELETE') {
+                // Show loading state
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+                this.disabled = true;
+
+                // Simulate API call (replace with actual implementation)
+                setTimeout(() => {
+                    alert('Account deletion functionality would be implemented here.');
+                    window.location.reload();
+                }, 2000);
+            }
+        });
+
+        // Auto-save notification settings
+        const notificationSwitches = document.querySelectorAll('input[type="checkbox"]');
+        notificationSwitches.forEach(switchEl => {
+            switchEl.addEventListener('change', function () {
+                // Show saving indicator
+                const saveBtn = document.querySelector('button[type="submit"]');
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                saveBtn.disabled = true;
+
+                // Auto-save after delay
+                setTimeout(() => {
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+
+                    // Show success message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                    alertDiv.innerHTML = `
+                    Settings saved automatically.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+
+                    const cardBody = this.closest('.card-body');
+                    cardBody.insertBefore(alertDiv, cardBody.firstChild);
+
+                    // Auto-dismiss after 3 seconds
+                    setTimeout(() => {
+                        if (alertDiv.parentNode) {
+                            alertDiv.remove();
+                        }
+                    }, 3000);
+                }, 1000);
+            });
+        });
+    });
+</script>
+
+<style>
+    .theme-options {
+        display: flex;
+        gap: 16px;
+        margin-top: 8px;
+    }
+
+    .theme-option {
+        flex: 1;
+        cursor: pointer;
+        text-align: center;
+        padding: 12px;
+        border: 2px solid var(--gray-300);
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .theme-option:hover {
+        border-color: var(--primary-color);
+    }
+
+    .theme-option.active {
+        border-color: var(--primary-color);
+        background-color: rgba(99, 102, 241, 0.1);
+    }
+
+    .theme-preview {
+        width: 60px;
+        height: 40px;
+        margin: 0 auto 8px;
+        border-radius: 4px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .light-preview {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+    }
+
+    .dark-preview {
+        background: #1e293b;
+        border: 1px solid #475569;
+    }
+
+    .auto-preview {
+        background: linear-gradient(45deg, #f8fafc 50%, #1e293b 50%);
+        border: 1px solid #94a3b8;
+    }
+
+    .theme-header {
+        height: 8px;
+        background: var(--primary-color);
+    }
+
+    .theme-sidebar {
+        position: absolute;
+        left: 0;
+        top: 8px;
+        width: 16px;
+        height: 32px;
+        background: rgba(99, 102, 241, 0.3);
+    }
+
+    .theme-content {
+        position: absolute;
+        right: 0;
+        top: 8px;
+        width: 44px;
+        height: 32px;
+        background: rgba(99, 102, 241, 0.1);
+    }
+
+    .account-info .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    .account-info .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .account-info .info-item label {
+        font-weight: 500;
+        color: var(--gray-600);
+        margin: 0;
+    }
+
+    .account-info .info-item span {
+        color: var(--gray-800);
+        font-size: 14px;
+    }
+
+    .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+    }
+</style>
+{% endblock %}

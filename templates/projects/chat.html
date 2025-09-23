@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.name }} - Chat{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Chat Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{{ url_for('project.projects') }}">Projects</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('project.project_detail', project_id=project.id) }}">{{ project.name }}</a></li>
+                            <li class="breadcrumb-item active">Chat</li>
+                        </ol>
+                    </nav>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-comments text-success"></i>
+                        {{ project.name }} - Chat
+                    </h1>
+                    <p class="text-muted mb-0">Real-time communication with your project team</p>
+                </div>
+                <a href="{{ url_for('project.project_detail', project_id=project.id) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Project
+                </a>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Chat Messages -->
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-comments"></i>
+                                Project Chat
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="chat-messages" class="chat-container position-relative" style="height: 500px; overflow-y: auto;">
+
+                                <!-- Messages will be loaded here -->
+                                {% for message in messages %}
+                                <div class="message {{ 'message-own' if message.user_id == current_user.id else 'message-other' }}">
+                                    <div class="message-content">
+                                        <div class="message-header">
+                                            <img src="{{ message.user.avatar_url }}" alt="{{ message.user.username }}" class="message-avatar rounded-circle" width="32" height="32">
+                                            <span class="message-author">{{ message.user.username }}</span>
+                                            <small class="message-time">{{ message.created_at.strftime('%H:%M') }}</small>
+                                        </div>
+                                        {% if message.is_attachment and message.attachment %}
+                                        <div class="message-text"></div>
+                                        <div class="mt-2">
+                                            {% if message.attachment.mimetype and message.attachment.mimetype.startswith('image/') %}
+                                            <img src="{{ message.attachment.url }}" alt="{{ message.attachment.filename }}" class="img-fluid rounded border" style="max-width: 240px; cursor: pointer;" data-preview="image" data-src="{{ message.attachment.url }}">
+                                            {% elif message.attachment.mimetype and message.attachment.mimetype.startswith('video/') %}
+                                            <video src="{{ message.attachment.url }}" class="rounded border" style="max-width: 320px; cursor: pointer;" controls data-preview="video" data-src="{{ message.attachment.url }}"></video>
+                                            {% endif %}
+                                            <div class="mt-2">
+                                                <a href="{{ message.attachment.url }}" target="_blank" rel="noopener noreferrer">{{ message.attachment.filename }}</a>
+                                            </div>
+                                            <div class="mt-1">
+                                                <a class="btn btn-sm btn-outline-secondary" href="{{ message.attachment.url }}" download>
+                                                    <i class="fas fa-download"></i> Download
+                                                </a>
+                                            </div>
+                                        </div>
+                                        {% else %}
+                                        <div class="message-text">{{ message.content }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                <!-- <div id="drop-overlay" class="d-flex" style="display:none; position:absolute; inset:0; border:2px dashed #6c757d; border-radius:0.375rem; background:rgba(108,117,125,0.05); align-items:center; justify-content:center; z-index:5;"> -->
+                                <div id="drop-overlay" class="d_flex" style="display:none !important; position:absolute; border:2px dashed #6c757d; border-radius:0.375rem; background:rgba(108,117,125,0.05); align-items:center; justify-content:center; z-index:5;height: 100%; width: 100%; left: 0; margin-top: -485px;">
+                                    <span class="text-muted">Drop file to upload</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <form id="chat-form" class="d-flex gap-2 align-items-center">
+                                <input type="file" id="file-input" class="d-none">
+                                <button type="button" id="attach-btn" class="btn btn-outline-secondary" title="Attach file">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                                <div class="flex-grow-1 position-relative">
+                                    <input type="text" id="message-input" class="form-control" placeholder="Type your message..." autocomplete="off">
+                                </div>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project Info Sidebar -->
+                <div class="col-lg-4">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Project Info</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6>{{ project.name }}</h6>
+                            <p class="text-muted">{{ project.description }}</p>
+
+                            <div class="mb-3">
+                                <small class="text-muted">Status</small>
+                                <div>
+                                    <span class="badge bg-{{ 'success' if project.status == 'complete' else 'warning' if project.status == 'ongoing' else 'secondary' }}">{{ project.status.title() }}</span>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <small class="text-muted">Progress</small>
+                                <div class="progress mt-1" style="height: 6px;">
+                                    <div class="progress-bar bg-{{ 'success' if project.progress == 100 else 'primary' }}" style="width: {{ project.progress }}%"></div>
+                                </div>
+                                <small class="text-muted">{{ project.progress }}% complete</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Team Members Sidebar Placeholder -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Team Members</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="online-users"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .chat-container {
+        padding: 1rem;
+        background-color: #f8f9fa;
+    }
+
+    .message {
+        margin-bottom: 1rem;
+        display: flex;
+    }
+
+    .message-own {
+        justify-content: flex-end;
+    }
+
+    .message-other {
+        justify-content: flex-start;
+    }
+
+    .message-content {
+        max-width: 70%;
+        padding: 0.75rem;
+        border-radius: 1rem;
+        position: relative;
+    }
+
+    .message-own .message-content {
+        background-color: #28a745;
+        color: white;
+        border-bottom-right-radius: 0.25rem;
+    }
+
+    .message-other .message-content {
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-bottom-left-radius: 0.25rem;
+    }
+
+    .message-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        gap: 0.5rem;
+    }
+
+    .message-author {
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .message-time {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.75rem;
+    }
+
+    .message-other .message-time {
+        color: #6c757d;
+    }
+
+    .message-text {
+        line-height: 1.4;
+        word-wrap: break-word;
+    }
+
+    .message-avatar {
+        border: 2px solid #fff;
+    }
+
+    .message-own .message-avatar {
+        border-color: #28a745;
+    }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    // Initialize Socket.IO
+    const socket = io();
+    const projectId = {{ project.id }};
+    const currentUser = '{{ current_user.username }}';
+
+    // Join project chat room
+    socket.emit('join_project', { project_id: projectId });
+
+    // DOM elements
+    const chatMessages = document.getElementById('chat-messages');
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message-input');
+    const onlineUsers = document.getElementById('online-users');
+    const dropOverlay = document.getElementById('drop-overlay');
+
+    // Scroll to bottom of chat
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Add message to chat (supports attachments)
+    function addMessage(data) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${data.user === currentUser ? 'message-own' : 'message-other'}`;
+
+        const content = document.createElement('div');
+        content.className = 'message-content';
+
+        const header = document.createElement('div');
+        header.className = 'message-header';
+        header.innerHTML = `
+            <img src="${data.avatar}" alt="${data.user}" class="message-avatar rounded-circle" width="32" height="32">
+            <span class="message-author">${data.user}</span>
+            <small class="message-time">${data.timestamp}</small>
+        `;
+
+        const body = document.createElement('div');
+        body.className = 'message-text';
+        if (data.message) body.textContent = data.message;
+
+        content.appendChild(header);
+        content.appendChild(body);
+
+        // Render attachment if present
+        if (data.attachment && data.attachment.url) {
+            const att = data.attachment;
+            const container = document.createElement('div');
+            container.className = 'mt-2';
+
+            // Show image/video preview for supported types
+            if (att.mimetype && att.mimetype.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = att.url;
+                img.alt = att.filename;
+                img.style.maxWidth = '240px';
+                img.style.borderRadius = '0.5rem';
+                img.style.display = 'block';
+                img.style.border = '1px solid #dee2e6';
+                img.style.cursor = 'pointer';
+                img.dataset.preview = 'image';
+                img.dataset.src = att.url;
+                container.appendChild(img);
+            } else if (att.mimetype && att.mimetype.startsWith('video/')) {
+                const vid = document.createElement('video');
+                vid.src = att.url;
+                vid.controls = true;
+                vid.style.maxWidth = '320px';
+                vid.className = 'rounded border';
+                vid.style.cursor = 'pointer';
+                vid.dataset.preview = 'video';
+                vid.dataset.src = att.url;
+                container.appendChild(vid);
+            }
+
+            const link = document.createElement('a');
+            link.href = att.url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = att.filename || 'Open attachment';
+            link.className = 'd-inline-block mt-1 me-2';
+            container.appendChild(link);
+
+            const dl = document.createElement('a');
+            dl.href = att.url;
+            dl.download = '';
+            dl.className = 'btn btn-sm btn-outline-secondary mt-1';
+            dl.innerHTML = '<i class="fas fa-download"></i> Download';
+            container.appendChild(dl);
+
+            content.appendChild(container);
+        }
+
+        messageDiv.appendChild(content);
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+    }
+
+    // Handle form submission
+    chatForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const message = messageInput.value.trim();
+        if (!message) return;
+        socket.emit('send_message', { project_id: projectId, message });
+        messageInput.value = '';
+    });
+
+    // Socket events
+    socket.on('new_message', function (data) { addMessage(data); });
+
+    socket.on('user_joined', function (data) {
+        const joinDiv = document.createElement('div');
+        joinDiv.className = 'typing-indicator';
+        joinDiv.textContent = data.message;
+        chatMessages.appendChild(joinDiv);
+        scrollToBottom();
+        setTimeout(() => { joinDiv.remove(); }, 3000);
+    });
+
+    socket.on('user_left', function (data) {
+        const leaveDiv = document.createElement('div');
+        leaveDiv.className = 'typing-indicator';
+        leaveDiv.textContent = data.message;
+        chatMessages.appendChild(leaveDiv);
+        scrollToBottom();
+        setTimeout(() => { leaveDiv.remove(); }, 3000);
+    });
+
+    // Attachment UI logic
+    const attachBtn = document.getElementById('attach-btn');
+    const fileInput = document.getElementById('file-input');
+
+    if (attachBtn && fileInput) {
+        attachBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files && fileInput.files[0]) {
+                uploadFile(fileInput.files[0]);
+                fileInput.value = '';
+            }
+        });
+    }
+
+    // Drag & drop on entire chat area
+    ['dragenter', 'dragover'].forEach(evt => {
+        chatMessages.addEventListener(evt, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (dropOverlay) dropOverlay.style.display = 'flex';
+        });
+    });
+    ['dragleave', 'drop'].forEach(evt => {
+        chatMessages.addEventListener(evt, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (dropOverlay) dropOverlay.style.display = 'none';
+        });
+    });
+    chatMessages.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const file = dt && dt.files && dt.files[0];
+        if (file) uploadFile(file);
+    });
+
+    function uploadFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        fetch(`/projects/${projectId}/chat/upload`, { method: 'POST', body: formData })
+            .then(async (res) => {
+                if (!res.ok) { let err = {}; try { err = await res.json(); } catch { } throw new Error(err.error || 'Upload failed'); }
+                return res.json();
+            })
+            .catch((err) => { console.error('Attachment upload error:', err); });
+    }
+
+    // Handle page unload
+    window.addEventListener('beforeunload', function () { socket.emit('leave_project', { project_id: projectId }); });
+
+    // Auto-scroll to bottom on page load
+    document.addEventListener('DOMContentLoaded', function () { scrollToBottom(); });
+
+    // Handle Enter key in message input
+    messageInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); chatForm.dispatchEvent(new Event('submit')); }
+    });
+
+    // Focus on message input
+    messageInput.focus();
+</script>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalLabel">Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center" id="previewBody"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Attachment preview click handling for images/videos
+    document.addEventListener('click', function (e) {
+        const target = e.target;
+        if (target && target.dataset && target.dataset.preview) {
+            const type = target.dataset.preview;
+            const src = target.dataset.src;
+            const body = document.getElementById('previewBody');
+            body.innerHTML = '';
+            if (type === 'image') {
+                const img = document.createElement('img');
+                img.src = src;
+                img.className = 'img-fluid';
+                body.appendChild(img);
+            } else if (type === 'video') {
+                const vid = document.createElement('video');
+                vid.src = src;
+                vid.controls = true;
+                vid.autoplay = true;
+                vid.style.maxWidth = '100%';
+                body.appendChild(vid);
+            } else {
+                return; // For other types do nothing on click
+            }
+            const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+            modal.show();
+        }
+    });
+</script>
+{% endblock %}
