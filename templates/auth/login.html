@@ -40,7 +40,8 @@
                 {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                 {% for category, message in messages %}
-                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
+                    role="alert">
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
@@ -96,11 +97,11 @@
                 </div>
 
                 <!-- Demo Credentials -->
-                <div class="demo-credentials">
+                <!-- <div class="demo-credentials">
                     <h6>Demo Credentials:</h6>
                     <p><strong>Email:</strong> admin@protend.com</p>
                     <p><strong>Password:</strong> password123</p>
-                </div>
+                </div> -->
             </div>
         </div>
     </div>
