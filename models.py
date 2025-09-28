@@ -29,6 +29,12 @@ class User(UserMixin, db.Model):
     ban_reason = db.Column(db.Text, nullable=True)
     banned_at = db.Column(db.DateTime, nullable=True)
 
+    # 2FA/OTP fields
+    otp_verified = db.Column(db.Boolean, default=False)
+    otp_verified_at = db.Column(db.DateTime, nullable=True)
+    # Enable 2FA by default for new users
+    two_factor_enabled = db.Column(db.Boolean, default=True)
+
     def get_id(self):
         return str(self.id)
 
@@ -61,6 +67,18 @@ class User(UserMixin, db.Model):
     def can_access_dashboard(self):
         """Check if user can access dashboard (not banned and not restricted)"""
         return not self.is_currently_banned() and not self.is_currently_restricted()
+
+    def mark_otp_verified(self):
+        """Mark OTP as verified for the user"""
+        self.otp_verified = True
+        self.otp_verified_at = datetime.utcnow()
+        db.session.commit()
+
+    def reset_otp_verification(self):
+        """Reset OTP verification status"""
+        self.otp_verified = False
+        self.otp_verified_at = None
+        db.session.commit()
 
 
 class Project(db.Model):

@@ -426,3 +426,95 @@
         transform: rotate(360deg);
     }
 }
+
+/* OTP Modal Styles */
+.otp-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    color: white;
+    font-size: 24px;
+}
+
+.otp-input {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: 8px;
+    border: 2px solid var(--gray-300);
+    border-radius: var(--border-radius);
+    padding: 16px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.otp-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    letter-spacing: 8px;
+}
+
+.otp-input.is-invalid {
+    border-color: var(--danger-color);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.otp-footer {
+    border-top: 1px solid var(--gray-200);
+    padding-top: 16px;
+    margin-top: 16px;
+}
+
+#resendBtn {
+    font-size: 14px;
+    padding: 8px 16px;
+    transition: all 0.2s ease;
+}
+
+#resendBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#resendBtn:not(:disabled):hover {
+    transform: translateY(-1px);
+}
+
+#countdown {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* Modal customization */
+.modal-content {
+    border: none;
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-body {
+    padding: 32px;
+}
+
+/* Responsive OTP modal */
+@media (max-width: 480px) {
+    .otp-input {
+        font-size: 20px;
+        letter-spacing: 6px;
+        padding: 14px;
+    }
+
+    .otp-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+
+    .modal-body {
+        padding: 24px;
+    }
+}

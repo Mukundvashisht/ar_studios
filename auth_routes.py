@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from models import User, Activity
@@ -7,6 +7,8 @@ import requests
 import json
 import os
 from oauthlib.oauth2 import WebApplicationClient
+from otp_service import otp_service
+from datetime import datetime
 
 # Google OAuth Configuration
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID")
@@ -39,22 +41,178 @@ def login():
         user = User.query.filter_by(email=email).first()
 
         if user and user.password_hash and check_password_hash(user.password_hash, password):
+            # Check if 2FA is enabled for this user
+            if user.two_factor_enabled:
+                # Store user info in session for OTP verification
+                session['pending_user_id'] = user.id
+                session['pending_remember'] = remember
+                session['pending_next'] = request.args.get('next')
+
+                # Send OTP
+                success, message = otp_service.send_otp(email, 'login')
+                if success:
+                    flash(
+                        'A verification code has been sent to your email. Please check your inbox.', 'info')
+                    return render_template('auth/login.html', show_otp_modal=True)
+                else:
+                    flash(
+                        f'Failed to send verification code: {message}', 'error')
+                    return render_template('auth/login.html')
+            else:
+                # 2FA disabled, proceed with normal login
+                login_user(user, remember=remember)
+
+                # Log the login activity
+                activity = Activity()
+                activity.user_id = user.id
+                activity.action = "User Login"
+                activity.description = f"User {user.username} logged in"
+                db.session.add(activity)
+                db.session.commit()
+
+                next_page = request.args.get('next')
+                return redirect(next_page) if next_page else redirect(url_for('dashboard'))
+        else:
+            flash('Invalid email or password.', 'error')
+
+    return render_template('auth/login.html')
+
+
+@auth_bp.route('/verify-otp', methods=['POST'])
+def verify_otp():
+    """Verify OTP for login or registration"""
+    if request.is_json:
+        data = request.get_json()
+        otp = data.get('otp')
+        purpose = data.get('purpose', 'login')
+    else:
+        otp = request.form.get('otp')
+        purpose = request.form.get('purpose', 'login')
+
+    if not otp:
+        if request.is_json:
+            return jsonify({'success': False, 'message': 'OTP is required'}), 400
+        flash('OTP is required.', 'error')
+        return redirect(url_for('auth.login'))
+
+    # Get user info from session
+    pending_user_id = session.get('pending_user_id')
+    if not pending_user_id:
+        if request.is_json:
+            return jsonify({'success': False, 'message': 'No pending authentication'}), 400
+        flash('No pending authentication found.', 'error')
+        return redirect(url_for('auth.login'))
+
+    user = User.query.get(pending_user_id)
+    if not user:
+        if request.is_json:
+            return jsonify({'success': False, 'message': 'User not found'}), 400
+        flash('User not found.', 'error')
+        return redirect(url_for('auth.login'))
+
+    # Verify OTP
+    success, message = otp_service.verify_otp(user.email, otp, purpose)
+
+    if success:
+        # Mark OTP as verified
+        user.mark_otp_verified()
+
+        # Check if this is a signup verification
+        pending_purpose = session.get('pending_purpose')
+        if pending_purpose == 'signup':
+            # Complete registration
+            login_user(user, remember=True)
+
+            # Log the registration activity
+            activity = Activity()
+            activity.user_id = user.id
+            activity.action = "Email Verification Complete"
+            activity.description = f"User {user.username} completed email verification"
+            db.session.add(activity)
+            db.session.commit()
+
+            # Clear session data
+            session.pop('pending_user_id', None)
+            session.pop('pending_purpose', None)
+
+            if request.is_json:
+                return jsonify({
+                    'success': True,
+                    'message': 'Registration completed successfully',
+                    'redirect_url': url_for('dashboard')
+                })
+
+            flash(
+                'Registration completed successfully! Welcome to AR Studios.', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            # Complete login
+            remember = session.get('pending_remember', False)
             login_user(user, remember=remember)
 
             # Log the login activity
             activity = Activity()
             activity.user_id = user.id
-            activity.action = "User Login"
-            activity.description = f"User {user.username} logged in"
+            activity.action = "User Login with 2FA"
+            activity.description = f"User {user.username} logged in with 2FA verification"
             db.session.add(activity)
             db.session.commit()
 
-            next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('dashboard'))
-        else:
-            flash('Invalid email or password.', 'error')
+            # Clear session data
+            session.pop('pending_user_id', None)
+            session.pop('pending_remember', None)
+            session.pop('pending_next', None)
 
-    return render_template('auth/login.html')
+            next_page = session.pop('pending_next', None)
+
+            if request.is_json:
+                return jsonify({
+                    'success': True,
+                    'message': 'Login successful',
+                    'redirect_url': next_page if next_page else url_for('dashboard')
+                })
+
+            return redirect(next_page) if next_page else redirect(url_for('dashboard'))
+    else:
+        if request.is_json:
+            return jsonify({'success': False, 'message': message}), 400
+
+        flash(f'OTP verification failed: {message}', 'error')
+        return redirect(url_for('auth.login'))
+
+
+@auth_bp.route('/resend-otp', methods=['POST'])
+def resend_otp():
+    """Resend OTP for pending authentication"""
+    pending_user_id = session.get('pending_user_id')
+    if not pending_user_id:
+        if request.is_json:
+            return jsonify({'success': False, 'message': 'No pending authentication'}), 400
+        flash('No pending authentication found.', 'error')
+        return redirect(url_for('auth.login'))
+
+    user = User.query.get(pending_user_id)
+    if not user:
+        if request.is_json:
+            return jsonify({'success': False, 'message': 'User not found'}), 400
+        flash('User not found.', 'error')
+        return redirect(url_for('auth.login'))
+
+    # Send new OTP
+    purpose = request.form.get(
+        'purpose', 'login') if not request.is_json else request.get_json().get('purpose', 'login')
+    success, message = otp_service.send_otp(user.email, purpose)
+
+    if success:
+        if request.is_json:
+            return jsonify({'success': True, 'message': 'New OTP sent successfully'})
+        flash('A new verification code has been sent to your email.', 'info')
+    else:
+        if request.is_json:
+            return jsonify({'success': False, 'message': message}), 400
+        flash(f'Failed to resend verification code: {message}', 'error')
+
+    return redirect(url_for('auth.login'))
 
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
@@ -123,17 +281,20 @@ def register():
             db.session.add(new_user)
             db.session.commit()
 
-            # Log the registration activity
-            activity = Activity()
-            activity.user_id = new_user.id
-            activity.action = "User Registration"
-            activity.description = f"New client {username} registered"
-            db.session.add(activity)
-            db.session.commit()
+            # Store user info in session for OTP verification
+            session['pending_user_id'] = new_user.id
+            session['pending_purpose'] = 'signup'
 
-            flash(
-                'Registration successful! Please log in with your new account.', 'success')
-            return redirect(url_for('auth.login'))
+            # Send OTP for email verification
+            success, message = otp_service.send_otp(email, 'signup')
+            if success:
+                flash('Registration successful! A verification code has been sent to your email. Please verify your email to complete registration.', 'info')
+                return render_template('auth/register.html', show_otp_modal=True)
+            else:
+                # If OTP sending fails, still create the user but mark as not verified
+                flash(
+                    f'Registration successful, but failed to send verification email: {message}. You can verify your email later.', 'warning')
+                return redirect(url_for('auth.login'))
 
         except Exception as e:
             db.session.rollback()
@@ -209,17 +370,20 @@ def register_designer():
             db.session.add(new_user)
             db.session.commit()
 
-            # Log the registration activity
-            activity = Activity()
-            activity.user_id = new_user.id
-            activity.action = "Designer Registration"
-            activity.description = f"New designer {username} registered"
-            db.session.add(activity)
-            db.session.commit()
+            # Store user info in session for OTP verification
+            session['pending_user_id'] = new_user.id
+            session['pending_purpose'] = 'signup'
 
-            flash(
-                'Designer registration successful! Please log in with your new account.', 'success')
-            return redirect(url_for('auth.login'))
+            # Send OTP for email verification
+            success, message = otp_service.send_otp(email, 'signup')
+            if success:
+                flash('Designer registration successful! A verification code has been sent to your email. Please verify your email to complete registration.', 'info')
+                return render_template('auth/register_designer.html', show_otp_modal=True)
+            else:
+                # If OTP sending fails, still create the user but mark as not verified
+                flash(
+                    f'Designer registration successful, but failed to send verification email: {message}. You can verify your email later.', 'warning')
+                return redirect(url_for('auth.login'))
 
         except Exception as e:
             db.session.rollback()

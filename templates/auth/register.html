@@ -36,7 +36,8 @@
                 {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                 {% for category, message in messages %}
-                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
+                    role="alert">
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
@@ -49,7 +50,9 @@
                         <label for="username" class="form-label">Username</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-user"></i></span>
-                            <input type="text" class="form-control" id="username" name="username" required pattern="[a-zA-Z0-9_]{3,20}" title="Username must be 3-20 characters long and contain only letters, numbers, and underscores">
+                            <input type="text" class="form-control" id="username" name="username" required
+                                pattern="[a-zA-Z0-9_]{3,20}"
+                                title="Username must be 3-20 characters long and contain only letters, numbers, and underscores">
                         </div>
                         <small class="form-text text-muted">3-20 characters, letters, numbers, and underscores
                             only</small>
@@ -67,7 +70,8 @@
                         <label for="password" class="form-label">Password</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                            <input type="password" class="form-control" id="password" name="password" required minlength="6">
+                            <input type="password" class="form-control" id="password" name="password" required
+                                minlength="6">
                             <button class="btn btn-outline-secondary" type="button" id="togglePassword">
                                 <i class="fas fa-eye"></i>
                             </button>
@@ -80,7 +84,8 @@
                         <label for="confirm_password" class="form-label">Confirm Password</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password"
+                                required>
                             <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
                                 <i class="fas fa-eye"></i>
                             </button>
@@ -114,6 +119,46 @@
                     <p>Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a></p>
                     <!-- <p class="mt-2"><small>Want to register as a designer? <a
                                 href="{{ url_for('auth.register_designer') }}">Click here</a></small></p> -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OTP Verification Modal -->
+    <div class="modal fade" id="otpModal" tabindex="-1" aria-labelledby="otpModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center p-4">
+                    <div class="mb-4">
+                        <div class="otp-icon mb-3">
+                            <i class="fas fa-envelope-open-text"></i>
+                        </div>
+                        <h4 class="mb-2">Verify Your Email</h4>
+                        <p class="text-muted mb-0">We've sent a 6-digit code to your email address</p>
+                    </div>
+
+                    <form id="otpForm" class="mb-4">
+                        <div class="mb-3">
+                            <input type="text" class="form-control form-control-lg text-center otp-input" id="otpCode"
+                                name="otp" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required>
+                            <div class="invalid-feedback" id="otpError"></div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" id="verifyBtn">
+                                <i class="fas fa-check me-2"></i>Verify & Complete Registration
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="otp-footer">
+                        <p class="text-muted mb-2">
+                            <span id="timerText">Code expires in <span id="countdown">60</span> seconds</span>
+                        </p>
+                        <button type="button" class="btn btn-link text-decoration-none" id="resendBtn" disabled>
+                            <i class="fas fa-redo me-1"></i>Resend Code
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -229,6 +274,150 @@
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
             });
+
+            // Initialize OTP modal if needed
+            {% if show_otp_modal %}
+            const otpModal = new bootstrap.Modal(document.getElementById('otpModal'));
+            otpModal.show();
+            startOTPTimer();
+            {% endif %}
+        });
+
+        // OTP Modal functionality
+        let otpTimer = null;
+        let timeLeft = 60;
+
+        function startOTPTimer() {
+            timeLeft = 60;
+            const countdownElement = document.getElementById('countdown');
+            const resendBtn = document.getElementById('resendBtn');
+            const timerText = document.getElementById('timerText');
+
+            otpTimer = setInterval(() => {
+                timeLeft--;
+                countdownElement.textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(otpTimer);
+                    timerText.innerHTML = 'Code has expired';
+                    resendBtn.disabled = false;
+                    resendBtn.classList.remove('text-muted');
+                    resendBtn.classList.add('text-primary');
+                }
+            }, 1000);
+        }
+
+        // OTP form submission
+        document.getElementById('otpForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const otpCode = document.getElementById('otpCode').value;
+            const verifyBtn = document.getElementById('verifyBtn');
+            const otpError = document.getElementById('otpError');
+
+            if (!otpCode || otpCode.length !== 6) {
+                document.getElementById('otpCode').classList.add('is-invalid');
+                otpError.textContent = 'Please enter a valid 6-digit code';
+                return;
+            }
+
+            // Disable button and show loading
+            verifyBtn.disabled = true;
+            verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verifying...';
+
+            // Send OTP verification request
+            fetch('{{ url_for("auth.verify_otp") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    otp: otpCode,
+                    purpose: 'signup'
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Success - redirect
+                        window.location.href = data.redirect_url;
+                    } else {
+                        // Error
+                        document.getElementById('otpCode').classList.add('is-invalid');
+                        otpError.textContent = data.message;
+                        verifyBtn.disabled = false;
+                        verifyBtn.innerHTML = '<i class="fas fa-check me-2"></i>Verify & Complete Registration';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('otpCode').classList.add('is-invalid');
+                    otpError.textContent = 'An error occurred. Please try again.';
+                    verifyBtn.disabled = false;
+                    verifyBtn.innerHTML = '<i class="fas fa-check me-2"></i>Verify & Complete Registration';
+                });
+        });
+
+        // Resend OTP
+        document.getElementById('resendBtn').addEventListener('click', function () {
+            const resendBtn = this;
+            const originalText = resendBtn.innerHTML;
+
+            resendBtn.disabled = true;
+            resendBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
+
+            fetch('{{ url_for("auth.resend_otp") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    purpose: 'signup'
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Reset timer
+                        startOTPTimer();
+                        resendBtn.disabled = true;
+                        resendBtn.classList.add('text-muted');
+                        resendBtn.classList.remove('text-primary');
+                        resendBtn.innerHTML = originalText;
+
+                        // Show success message
+                        const toastEl = document.createElement('div');
+                        toastEl.className = 'toast align-items-center text-white bg-success border-0';
+                        toastEl.setAttribute('role', 'alert');
+                        toastEl.innerHTML = `
+                        <div class="d-flex">
+                            <div class="toast-body">${data.message}</div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>`;
+                        document.body.appendChild(toastEl);
+                        new bootstrap.Toast(toastEl, { delay: 5000 }).show();
+                    } else {
+                        resendBtn.disabled = false;
+                        resendBtn.innerHTML = originalText;
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    resendBtn.disabled = false;
+                    resendBtn.innerHTML = originalText;
+                    alert('Failed to resend code. Please try again.');
+                });
+        });
+
+        // Auto-format OTP input
+        document.getElementById('otpCode').addEventListener('input', function (e) {
+            // Remove non-numeric characters
+            this.value = this.value.replace(/[^0-9]/g, '');
+
+            // Remove error state when user types
+            this.classList.remove('is-invalid');
+            document.getElementById('otpError').textContent = '';
         });
     </script>
 </body>

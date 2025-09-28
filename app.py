@@ -64,7 +64,6 @@ db_host = os.environ.get("DB_HOST", "")
 db_port = os.environ.get("DB_PORT", "")
 db_name = os.environ.get("DB_NAME", "")
 
-# app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///protend.db")
 app.config["SQLALCHEMY_DATABASE_URI"] = (
     f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
     # f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?sslmode=require"
@@ -77,6 +76,10 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 
 # initialize the app with the extension
 db.init_app(app)
+
+# Initialize Flask-Migrate
+from flask_migrate import Migrate
+migrate = Migrate(app, db)
 
 with app.app_context():
     # Import models and routes
