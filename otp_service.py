@@ -12,20 +12,37 @@ import json
 
 class OTPService:
     def __init__(self):
-        # Redis configuration for storing OTPs temporarily
-        self.redis_client = redis.Redis(
-            host=os.environ.get('REDIS_HOST', 'localhost'),
-            port=int(os.environ.get('REDIS_PORT', 6379)),
-            db=0,
-            decode_responses=True
-        )
+        # Try to use Redis if available, otherwise use in-memory storage
+        self.use_redis = True
+        self.redis_client = None
+        self.memory_store = {}
+        
+        try:
+            self.redis_client = redis.Redis(
+                host=os.environ.get('REDIS_HOST', 'localhost'),
+                port=int(os.environ.get('REDIS_PORT', 6379)),
+                db=0,
+                decode_responses=True,
+                socket_connect_timeout=2  # Shorter timeout for faster fallback
+            )
+            # Test the connection
+            self.redis_client.ping()
+        except (redis.ConnectionError, redis.TimeoutError):
+            self.use_redis = False
+            print('Warning: Redis not available, using in-memory OTP storage (not suitable for production)')
+            self.redis_client = None
 
-        # Email configuration
+        # Email configuration with better defaults and validation
         self.smtp_server = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
         self.smtp_port = int(os.environ.get('SMTP_PORT', 587))
-        self.smtp_username = os.environ.get('SMTP_USERNAME')
-        self.smtp_password = os.environ.get('SMTP_PASSWORD')
-        self.from_email = os.environ.get('FROM_EMAIL', 'noreply@arstudios.com')
+        self.smtp_username = os.environ.get('SMTP_USERNAME', '')
+        self.smtp_password = os.environ.get('SMTP_PASSWORD', '')
+        self.from_email = os.environ.get('FROM_EMAIL', self.smtp_username or 'noreply@example.com')
+        
+        # Check if email is configured
+        self.email_enabled = bool(self.smtp_username and self.smtp_password)
+        if not self.email_enabled:
+            print('Warning: Email sending is disabled. Set SMTP_USERNAME and SMTP_PASSWORD environment variables to enable email notifications.')
 
         # OTP configuration
         self.otp_length = 6
@@ -41,7 +58,7 @@ class OTPService:
         return hashlib.sha256(otp.encode()).hexdigest()
 
     def store_otp(self, email, otp, purpose='login'):
-        """Store OTP in Redis with expiration"""
+        """Store OTP in Redis or in-memory with expiration"""
         hashed_otp = self.hash_otp(otp)
         key = f"otp:{purpose}:{email}"
 
@@ -50,46 +67,104 @@ class OTPService:
             'hashed_otp': hashed_otp,
             'created_at': datetime.utcnow().isoformat(),
             'attempts': 0,
-            'purpose': purpose
+            'purpose': purpose,
+            'expires_at': (datetime.utcnow() + timedelta(minutes=2)).isoformat()
         }
 
-        # Set expiration to 2 minutes (120 seconds) to give some buffer
-        self.redis_client.setex(key, 120, json.dumps(otp_data))
-
+        if self.use_redis and self.redis_client:
+            try:
+                # Set expiration to 2 minutes (120 seconds)
+                self.redis_client.setex(key, 120, json.dumps(otp_data))
+                return True
+            except redis.RedisError as e:
+                print(f"Redis error: {e}")
+                # Fall through to in-memory storage
+                self.use_redis = False
+        
+        # Fallback to in-memory storage
+        self.memory_store[key] = otp_data
         return True
+
+    def _cleanup_expired_otps(self):
+        """Remove expired OTPs from memory store"""
+        now = datetime.utcnow()
+        expired_keys = [
+            key for key, data in self.memory_store.items()
+            if datetime.fromisoformat(data['expires_at']) < now
+        ]
+        for key in expired_keys:
+            self.memory_store.pop(key, None)
 
     def verify_otp(self, email, otp, purpose='login'):
         """Verify OTP and return success status"""
         key = f"otp:{purpose}:{email}"
-        stored_data = self.redis_client.get(key)
+        
+        # Clean up expired OTPs first
+        self._cleanup_expired_otps()
+        
+        # Try Redis first if available
+        if self.use_redis and self.redis_client:
+            try:
+                stored_data = self.redis_client.get(key)
+                if stored_data:
+                    try:
+                        otp_data = json.loads(stored_data)
+                        # Check attempts
+                        if otp_data.get('attempts', 0) >= self.max_attempts:
+                            self.redis_client.delete(key)
+                            return False, "Too many failed attempts. Please request a new OTP."
 
-        if not stored_data:
-            return False, "OTP has expired or doesn't exist"
+                        # Verify OTP
+                        hashed_input = self.hash_otp(otp)
+                        if hashed_input == otp_data['hashed_otp']:
+                            # OTP is valid, delete it to prevent reuse
+                            self.redis_client.delete(key)
+                            return True, "OTP verified successfully"
+                        else:
+                            # Increment attempts
+                            otp_data['attempts'] = otp_data.get('attempts', 0) + 1
+                            self.redis_client.setex(key, 120, json.dumps(otp_data))
+                            return False, "Invalid OTP"
+                    except (json.JSONDecodeError, KeyError):
+                        pass
+            except redis.RedisError:
+                # Fall through to in-memory check
+                pass
+        
+        # Check in-memory storage
+        if key in self.memory_store:
+            otp_data = self.memory_store[key]
+            # Check if OTP is expired
+            if datetime.fromisoformat(otp_data['expires_at']) < datetime.utcnow():
+                self.memory_store.pop(key, None)
+                return False, "OTP has expired"
+                
+            # Check attempts
+            if otp_data.get('attempts', 0) >= self.max_attempts:
+                self.memory_store.pop(key, None)
+                return False, "Too many failed attempts. Please request a new OTP."
 
-        try:
-            otp_data = json.loads(stored_data)
-        except json.JSONDecodeError:
-            return False, "Invalid OTP data"
-
-        # Check attempts
-        if otp_data.get('attempts', 0) >= self.max_attempts:
-            self.redis_client.delete(key)
-            return False, "Too many failed attempts. Please request a new OTP."
-
-        # Verify OTP
-        hashed_input = self.hash_otp(otp)
-        if hashed_input != otp_data['hashed_otp']:
-            # Increment attempts
-            otp_data['attempts'] += 1
-            self.redis_client.setex(key, 120, json.dumps(otp_data))
-            return False, "Invalid OTP"
-
-        # OTP is valid, delete it to prevent reuse
-        self.redis_client.delete(key)
-        return True, "OTP verified successfully"
+            # Verify OTP
+            hashed_input = self.hash_otp(otp)
+            if hashed_input == otp_data['hashed_otp']:
+                # OTP is valid, delete it to prevent reuse
+                self.memory_store.pop(key, None)
+                return True, "OTP verified successfully"
+            else:
+                # Increment attempts
+                otp_data['attempts'] = otp_data.get('attempts', 0) + 1
+                return False, "Invalid OTP"
+        
+        return False, "OTP has expired or doesn't exist"
 
     def send_otp_email(self, email, otp, purpose='login'):
         """Send OTP via email"""
+        if not self.email_enabled:
+            return False, "Email sending is not configured. Please contact support."
+            
+        if not all([self.smtp_username, self.smtp_password, self.smtp_server]):
+            return False, "Email configuration is incomplete. Please check your SMTP settings."
+            
         try:
             # Create message
             msg = MIMEMultipart()
@@ -154,15 +229,26 @@ class OTPService:
 
             msg.attach(MIMEText(body, 'html'))
 
-            # Send email
-            server = smtplib.SMTP(self.smtp_server, self.smtp_port)
-            server.starttls()
-            server.login(self.smtp_username, self.smtp_password)
-            text = msg.as_string()
-            server.sendmail(self.from_email, email, text)
-            server.quit()
-
-            return True, "OTP sent successfully"
+            # Connect to SMTP server and send email
+            try:
+                with smtplib.SMTP(self.smtp_server, self.smtp_port, timeout=10) as server:
+                    server.ehlo()
+                    if self.smtp_server == 'smtp.gmail.com':
+                        server.starttls()
+                        server.ehlo()
+                    
+                    if self.smtp_username and self.smtp_password:
+                        server.login(self.smtp_username, self.smtp_password)
+                    
+                    server.send_message(msg)
+                
+                return True, "Email sent successfully"
+            except smtplib.SMTPAuthenticationError:
+                return False, "Failed to authenticate with the email server. Please check your SMTP credentials."
+            except smtplib.SMTPException as e:
+                return False, f"Failed to send email: {str(e)}"
+            except Exception as e:
+                return False, f"An error occurred while sending email: {str(e)}"
 
         except Exception as e:
             current_app.logger.error(f"Failed to send OTP email: {str(e)}")
