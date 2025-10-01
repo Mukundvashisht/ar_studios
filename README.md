@@ -56,7 +56,7 @@ cd "try3 - Copy"
 2) Create a virtual environment and install dependencies
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+.\.venv\Scripts\activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
@@ -73,9 +73,9 @@ DB_HOST=127.0.0.1
 DB_PORT=5432
 DB_NAME=crm_db
 
-# Optional: OAuth etc. (if used in your deployment)
-# GOOGLE_CLIENT_ID=
-# GOOGLE_CLIENT_SECRET=
+# Google OAuth
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
 ```
 
 4) Ensure PostgreSQL database exists
@@ -206,10 +206,10 @@ python app.py
 ```
 
 ---
-
+<!-- 
 ## Contributing
 PRs and issues are welcome. Please open an issue describing the change before large contributions.
 
 ## License
-MIT (or your preferred license)
+MIT (or your preferred license) -->
 
