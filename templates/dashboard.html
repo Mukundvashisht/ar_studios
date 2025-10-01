@@ -1,0 +1,253 @@
+{% extends "base.html" %} {% block content %}
+
+<div class="dashboard-container">
+    <!-- Project Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-content">
+                    <div class="stat-label">Total Project</div>
+                    <div class="stat-number">{{ total_projects }}<span class="stat-change">+</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card pending">
+                <div class="stat-content">
+                    <div class="stat-label">Pending Project</div>
+                    <div class="stat-number">{{ pending_projects }}<span class="stat-change">+</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card ongoing">
+                <div class="stat-content">
+                    <div class="stat-label">On Going project</div>
+                    <div class="stat-number">{{ ongoing_projects }}<span class="stat-change">+</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card complete">
+                <div class="stat-content">
+                    <div class="stat-label">Complete Project</div>
+                    <div class="stat-number">{{ complete_projects }}<span class="stat-change">+</span></div>
+                </div>
+                <!-- <a class="btn btn-primary create-project-btn" href="{{ url_for('project.create_project') }}">
+                    <i class="fas fa-plus"></i>
+                    Create New Project
+                </a> -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Project Update -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="section-header">
+                <h5 class="section-title">Recent Project Update</h5>
+                <div class="section-actions">
+                    <button class="btn btn-outline-primary btn-sm" onclick="window.location.href{{url_for('project.create_project')}}">
+                        <i class="fas fa-plus"></i>
+                        Add Project
+                    </button>
+                    <!-- <button class="btn btn-link btn-sm" src="{{ url_for('project.projects') }}"> -->
+                    <button class="btn btn-link btn-sm" onclick="window.location.href='{{ url_for( 'project.projects') }}';">
+                        <i class="fas fa-eye"></i>
+                        View All
+                    </button>
+                    <span class="latest-label">Latest</span>
+                </div>
+            </div>
+
+            <div class="row">
+                {% for project in recent_projects %}
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <a href="{{ url_for('project.project_detail', project_id=project.id) }}" class="" style="text-decoration: none">
+                        <div class="project-card{% if project.not_opened %} not_opened{% endif %}">
+                            <div class="project-header">
+                                <div class="project-icon {{ project.department|lower }}">
+                                    <i class="{{ get_project_icon(project.name) }}"></i>
+                                </div>
+                                <div class="project-priority">
+                                    <span class="badge badge-{{ get_priority_color(project.priority) }}">{{ project.priority }}</span>
+                                </div>
+                            </div>
+                            <div class="project-content">
+                                <h6 class="project-title">{{ project.name }}</h6>
+                                <p class="project-subtitle">{{ project.description }}</p>
+                                <div class="progress mb-3" style="height: 6px; background: #e1e1e1">
+                                    <!-- <div class="progress-bar {{ bar_class }}" style="width: {{ p }}%"></div> -->
+                                    <div class="progress-bar bg-primary" style="width: {{ project.progress }}%; "></div>
+                                </div>
+                                <div class="project-team">
+                                    {% for assignment in project.assignments[:3] %}
+                                    <div class="team-avatar">
+                                        <img src="{{ assignment.user.avatar_url if assignment.user else 'https://ui-avatars.com/api/?name=User&background=6c757d&color=fff' }}" alt="Team Member" />
+                                    </div>
+                                    {% endfor %} {% if project.assignments|length > 3 %}
+                                    <div class="team-more">+{{ project.assignments|length - 3 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts and Statistics -->
+    <div class="row mb-4">
+        <!-- Project Statistics Chart -->
+        <div class="col-lg-8 mb-3">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h5 class="chart-title">Project Statistics</h5>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <span class="legend-color complete"></span>
+                            <span class="legend-label">Complete</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color ongoing"></span>
+                            <span class="legend-label">Ongoing</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="projectStatsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Category Chart -->
+        <div class="col-lg-4 mb-3">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h5 class="chart-title">Employee Category</h5>
+                </div>
+                <div class="chart-container">
+                    <canvas id="employeeCategoryChart"></canvas>
+                </div>
+                <div class="category-legend">
+                    {% for i in range(employee_categories.labels|length) %}
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: {{ employee_categories.datasets[0].backgroundColor[i] }};"></span>
+                        <span class="legend-label">{{ employee_categories.labels[i] }}</span>
+                        <span class="legend-value">{{ employee_categories.datasets[0].data[i] }}%</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Section -->
+    <div class="row">
+        <!-- Recent Activity -->
+        <div class="col-lg-6 mb-3">
+            <div class="activity-card">
+                <div class="activity-header">
+                    <h5 class="activity-title">Recent Activity</h5>
+                    <span class="activity-date">September 3, 2024</span>
+                    <button class="btn btn-link btn-sm">
+                        <span>Select Date</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+                <div class="activity-list">
+                    {% for activity, user in recent_activities %}
+                    <div class="activity-item">
+                        <div class="activity-avatar">
+                            <img src="{{ user.avatar_url }}" alt="{{ user.username }}" />
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-user">{{ user.username|title|replace('_', ' ') }}</div>
+                            <div class="activity-time">{{ time_ago(activity.created_at) }}</div>
+                            <div class="activity-action">{{ activity.action }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- In Progress Projects -->
+        <div class="col-lg-6 mb-3">
+            <div class="progress-card">
+                <div class="progress-header">
+                    <h5 class="progress-title">In Progress Project</h5>
+                    <button class="btn btn-link btn-sm">
+                        <span>See All</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="progress-list">
+                    {% for project in in_progress_projects %}
+                    <div class="progress-item">
+                        <div class="progress-icon">
+                            <i class="{{ get_project_icon(project.name) }}"></i>
+                        </div>
+                        <div class="progress-content">
+                            <div class="progress-name">{{ project.name }}</div>
+                            <div class="progress-deadline">Deadline: In {{ project.assignments|length }} days</div>
+                            <div class="progress-bar-container">
+                                {% set p = project.progress %} {% set bar_class = 'low' if p < 34 else 'mid' if p < 67 else 'high' if p < 100 else 'complete' %} <div class="progress-bar">
+                                    <div class="progress-fill {{ bar_class }}" style="width: {{ p }}%"></div>
+                            </div>
+                            <span class="progress-percentage">{{ p }}%</span>
+                        </div>
+                    </div>
+                    <div class="progress-team">
+                        {% for assignment in project.assignments[:3] %}
+                        <div class="team-avatar-small">
+                            <img src="{{ assignment.user.avatar_url if assignment.user else 'https://ui-avatars.com/api/?name=User&background=6c757d&color=fff' }}" alt="Team Member" />
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+{% endblock %} {% block scripts %}
+<script>
+    // Initialize charts with data from Flask
+    document.addEventListener('DOMContentLoaded', function () {
+        // Project Statistics Chart
+        const projectCtx = document.getElementById('projectStatsChart').getContext('2d');
+        const chartData = {{ chart_data | tojson
+    }};
+
+    new Chart(projectCtx, {
+        type: 'line',
+        data: chartData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { color: '#64748b' } },
+                x: { grid: { display: false }, ticks: { color: '#64748b' } }
+            },
+            elements: { point: { radius: 4, hoverRadius: 6 } }
+        }
+    });
+
+    // Employee Category Chart
+    const employeeCtx = document.getElementById('employeeCategoryChart').getContext('2d');
+    const employeeData = {{ employee_categories | tojson }};
+
+    new Chart(employeeCtx, {
+        type: 'doughnut',
+        data: employeeData,
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '70%' }
+    });
+  });
+</script>
+{% endblock %}

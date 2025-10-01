@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Admin - {{ 'Edit' if item else 'Create' }} Client{% endblock %}
+{% block page_title %}{{ 'Edit' if item else 'Create' }} Client{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Client Name *</label>
+                        <input name="name" class="form-control" value="{{ item.name if item else '' }}" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Website URL</label>
+                        <input name="website_url" class="form-control" value="{{ item.website_url if item else '' }}" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Logo URL</label>
+                        <input name="logo_url" class="form-control" value="{{ item.logo_url if item else '' }}" />
+                        <div class="form-text">Provide a direct URL to the logo image. If not provided, you can use an icon class instead.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Icon Class</label>
+                        <input name="icon_class" class="form-control" value="{{ item.icon_class if item else '' }}" />
+                        <div class="form-text">Optional Font Awesome class, e.g., "fa-brands fa-apple"</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Display Order</label>
+                        <input type="number" name="display_order" class="form-control" value="{{ item.display_order if item else 0 }}" />
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if item and item.is_active or not item %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">Active</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{{ url_for('admin.clients_page') }}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">{{ 'Update' if item else 'Create' }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

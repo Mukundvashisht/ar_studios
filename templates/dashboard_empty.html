@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - No Projects{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center p-5">
+                    <div class="mb-3" style="font-size: 48px; color: #6366f1;">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+                    <h3 class="mb-2">No Projects Assigned</h3>
+                    <p class="text-muted mb-4">
+                        You currently don't have any projects assigned. Once a project is assigned to your account, it will appear here.
+                    </p>
+
+                    <div class="d-flex justify-content-center gap-2">
+                        <!-- <a href="{{ url_for('project.projects') }}" class="btn btn-primary">
+                            <i class="fas fa-project-diagram me-2"></i>View Projects
+                        </a> -->
+                        <a class="btn btn-primary create-project-btn" href="{{ url_for('project.create_project') }}">
+                            <i class="fas fa-plus"></i>
+                            Create New Project
+                        </a>
+                        <!-- <a href="{{ url_for('contact') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-envelope me-2"></i>Contact Support
+                        </a> -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center text-muted mt-3" style="font-size: 0.95rem;">
+                Need access? Ask your project manager or admin to assign a project to your account.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

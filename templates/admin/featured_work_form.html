@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Admin - {{ 'Edit' if item else 'Create' }} Featured Work{% endblock %}
+{% block page_title %}{{ 'Edit' if item else 'Create' }} Featured Work{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Title *</label>
+                        <input name="title" class="form-control" value="{{ item.title if item else '' }}" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Category</label>
+                        <input name="category" class="form-control" value="{{ item.category if item else '' }}" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Short Description</label>
+                        <textarea name="description" class="form-control" rows="3">{{ item.description if item else '' }}</textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Image</label>
+                        <input name="image_url" class="form-control mb-2" placeholder="Image URL" value="{{ item.image_url if item else '' }}" />
+                        <input type="file" name="image_file" class="form-control" accept="image/*" />
+                        <div class="form-text">Provide a URL or upload a file. If both are provided, the uploaded file will be used.</div>
+                        {% if item and item.image_url %}
+                        <div class="mt-2">
+                            <div class="small text-muted mb-1">Current image:</div>
+                            <img src="{{ item.image_url }}" alt="{{ item.title }}" style="height:60px;width:auto;object-fit:cover;border-radius:4px;border:1px solid #ddd;" />
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" name="delete_image" id="delete_image">
+                                <label class="form-check-label" for="delete_image">Delete current image</label>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Project Link/File</label>
+                        <input name="project_url" class="form-control mb-2" placeholder="Project URL" value="{{ item.project_url if item else '' }}" />
+                        <input type="file" name="project_file" class="form-control" />
+                        <div class="form-text">Optional: provide an external link or upload a file. If both are provided, the uploaded file will be used.</div>
+                        {% if item and item.project_url %}
+                        <div class="mt-2">
+                            <div class="small text-muted mb-1">Current link:</div>
+                            <a href="{{ item.project_url }}" target="_blank" rel="noopener">{{ item.project_url }}</a>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" name="delete_project" id="delete_project">
+                                <label class="form-check-label" for="delete_project">Delete current link/file</label>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Display Order</label>
+                        <input type="number" name="display_order" class="form-control" value="{{ item.display_order if item else 0 }}" />
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if item and item.is_active or not item %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">Active</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{{ url_for('admin.featured_works') }}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">{{ 'Update' if item else 'Create' }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

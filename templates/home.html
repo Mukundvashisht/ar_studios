@@ -1,0 +1,301 @@
+{% extends 'public_base.html' %}
+{% block title %}Ar Studios - Home{% endblock %}
+
+<!-- {% block styles %}
+<style>
+    .hero_section {
+        /* background-color: #F1F5F9; */
+        background-color: red;
+    }
+</style>
+{% endblock %} -->
+
+
+{% block content %}
+
+<style>
+    :root {
+        --home-gradient: linear-gradient(10deg, #6366F1 0%, #8B5CF6 100%);
+        --home-color1: #475569;
+        --home-color2: #1E293B;
+        --home-color3: #F1F5F9;
+    }
+
+    .mx_width {
+        max-width: 1200px;
+    }
+
+    .hero_section {
+        background-color: var(--home-color3);
+    }
+
+    .hero_section .inner {
+        max-width: 800px;
+        width: 100%;
+        padding: 75px 10px 100px;
+    }
+
+    .hero_section .heading {
+        font-size: 56px;
+        font-weight: 700;
+        line-height: 67px;
+        background-image: var(--home-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .hero_section .para {
+        font-size: 20px;
+        font-weight: 400;
+        line-height: 30px;
+        color: var(--home-color1);
+    }
+
+    .hero_section .view_work {
+        background: var(--home-gradient);
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 25px;
+        /* border: 2px solid #6366F1; */
+        border: 2px solid #8B5CF6;
+        color: #ffffff;
+        border-radius: 200px;
+        padding: 12px 30px;
+    }
+
+    .hero_section .view_work:hover {
+        background: transparent;
+        /* color: #ffffff; */
+        background-image: var(--home-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .services_section .inner {
+        padding: 68px 0 100px;
+    }
+
+    .services_section .heading {
+        padding-bottom: 10px;
+        font-size: 40px;
+        font-weight: 700;
+        line-height: 64px;
+        color: var(--home-color2);
+    }
+
+    .services_section .para {
+        padding-bottom: 60px;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 25px;
+        color: var(--home-color1);
+        max-width: 600px;
+        width: 100%;
+        margin: auto;
+    }
+
+    /* .services_section .service_card_section { */
+    .services_section .service_card_section .card {
+        background: var(--home-color3);
+        border: 0;
+        border-radius: 12px;
+    }
+
+    .service-card {
+        background-color: #f3f8fc;
+        border-radius: 12px;
+        padding: 30px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+    }
+
+    .service-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .icon-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        color: #fff;
+        font-size: 28px;
+    }
+
+    .icon-purple {
+        background-color: #7c5cff;
+    }
+
+    .icon-green {
+        background-color: #28a745;
+    }
+
+    .icon-pink {
+        background-color: #d63384;
+    }
+
+    /* Featured Work */
+    .featured-card {
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .featured-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .featured-thumb {
+        background-size: cover;
+        background-position: center;
+        border-top-left-radius: 0.5rem;
+        border-top-right-radius: 0.5rem;
+    }
+</style>
+<!-- Hero Section -->
+<section class="hero_section">
+    <div class="container text-center inner">
+        <h1 class="heading">We Create Immersive Augmented Reality Experiences</h1>
+        <p class="para inter">Transforming ideas into captivating AR solutions that blend digital innovation with real-world experiences.</p>
+        <button type="button" class="view_work btn inter" onclick="window.location.href='{{ url_for('portfolio') }}'">View Our Work</button>
+        <!-- <button type="button" class="learnmore">Learn More</button> -->
+    </div>
+
+</section>
+
+<!-- Services Section -->
+<!-- <section class="services_section">
+    <div class="container text-center mx_width inner">
+        <h3 class="heading ">Our Services</h3>
+        <p class="para inter">We offer a comprehensive range of augmented reality services to bring your vision to life.</p>
+        <div class="service_card_section d-flex">
+            <div class="card">
+                <img src="" alt="">
+                <h4 class="service_heading">Motion Design</h4>
+                <p class="description">Captivating motion graphics and animations that enhance your AR experiences and tell your brand's story.</p>
+            </div>
+        </div>
+    </div>
+</section> -->
+
+<section class="py-5">
+    <div class="container text-center">
+        <h2 class="fw-bold">Our Services</h2>
+        <p class="text-muted mb-5">We offer a comprehensive range of augmented reality services to bring your vision to life.</p>
+
+        <div class="row g-4">
+            <!-- AR Development -->
+            <div class="col-lg-4 col-md-6">
+                <div class="service-card h-100 text-start">
+                    <div class="icon-circle icon-purple">
+                        <i class="bi bi-vr"></i>
+                    </div>
+                    <h5 class="fw-bold">AR Development</h5>
+                    <p class="text-muted">Custom augmented reality applications for iOS and Android with immersive 3D experiences and interactive elements.</p>
+                </div>
+            </div>
+
+            <!-- Motion Design -->
+            <div class="col-lg-4 col-md-6">
+                <div class="service-card h-100 text-start">
+                    <div class="icon-circle icon-green">
+                        <i class="bi bi-film"></i>
+                    </div>
+                    <h5 class="fw-bold">Motion Design</h5>
+                    <p class="text-muted">Captivating motion graphics and animations that enhance your AR experiences and tell your brand's story.</p>
+                </div>
+            </div>
+
+            <!-- AR Commerce -->
+            <div class="col-lg-4 col-md-6 mx-auto">
+                <div class="service-card h-100 text-start">
+                    <div class="icon-circle icon-pink">
+                        <i class="bi bi-cart"></i>
+                    </div>
+                    <h5 class="fw-bold">AR Commerce</h5>
+                    <p class="text-muted">Interactive shopping experiences that allow customers to visualize products in their space before purchasing.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Work Section -->
+<section class="featured-work-section py-5 bg-light">
+    <div class="container">
+        <div class="d-flex flex-column flex-md-row align-items-md-end justify-content-between mb-4">
+            <div>
+                <h2 class="fw-bold mb-1">Featured Work</h2>
+                <p class="text-muted mb-0">A selection of recent AR experiences and interactive projects.</p>
+            </div>
+            <a href="{{ url_for('portfolio') }}" class="btn btn-outline-primary mt-3 mt-md-0">View All Projects</a>
+        </div>
+
+        <div class="row g-4">
+            {% if featured_works %}
+                {% for fw in featured_works %}
+                <div class="col-md-4">
+                    <a href="{{ fw.project_url or url_for('portfolio') }}" class="text-decoration-none text-reset" {% if fw.project_url %}target="_blank" rel="noopener"{% endif %}>
+                        <div class="card border-0 shadow-sm h-100 featured-card">
+                            <div class="ratio ratio-16x9 featured-thumb" style="background-image:url('{{ fw.image_url }}');"></div>
+                            <div class="card-body">
+                                {% if fw.category %}
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle mb-2">{{ fw.category }}</span>
+                                {% endif %}
+                                <h5 class="card-title mb-1">{{ fw.title }}</h5>
+                                {% if fw.description %}
+                                <p class="card-text text-muted small">{{ fw.description }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info">No featured work added yet.</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Our Clients Section -->
+<section class="clients-section py-5">
+    <div class="container">
+        <div class="d-flex flex-column flex-md-row align-items-md-end justify-content-between mb-4">
+            <div>
+                <h2 class="fw-bold mb-1">Our Clients</h2>
+                <p class="text-muted mb-0">Brands we’ve collaborated with.</p>
+            </div>
+        </div>
+
+        <!-- Owl Carousel wrapper (parent of content) -->
+        <div class="owl-carousel">
+            {% if clients %}
+                {% for c in clients %}
+                    <div class="item text-center p-4">
+                        {% if c.logo_url %}
+                            <img src="{{ c.logo_url }}" alt="{{ c.name }}" style="max-height:56px;object-fit:contain;">
+                        {% elif c.icon_class %}
+                            <i class="{{ c.icon_class }} fa-3x text-secondary"></i>
+                        {% else %}
+                            <span class="text-secondary">{{ c.name }}</span>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="item text-center p-4">
+                    <span class="text-secondary">No clients added yet.</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+
+
+{% endblock %}
